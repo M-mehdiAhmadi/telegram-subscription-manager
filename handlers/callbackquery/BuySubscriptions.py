@@ -2,7 +2,7 @@ from handlers.callbackquery import *
 
 
 
-class BuySubscriptionsHandler(BaseHanler):
+class BuySubscriptionsHandler(BaseHandler):
     def __init__(self):
         super().__init__(parent=self)
         self.edit_enabled = True

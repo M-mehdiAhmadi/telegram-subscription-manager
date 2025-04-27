@@ -1,7 +1,7 @@
 from handlers.callbackquery import *
 
 
-class SelectChannelSubscriptionsHandler(BaseHanler):
+class SelectChannelSubscriptionsHandler(BaseHandler):
     def __init__(self):
         super().__init__(parent=self)
         self.edit_enabled = True

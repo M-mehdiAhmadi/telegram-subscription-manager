@@ -1,7 +1,7 @@
 from handlers.callbackquery import *
 
 
-class SetLanguageHandler(BaseHanler):
+class SetLanguageHandler(BaseHandler):
     def __init__(self):
         super().__init__(parent=self)
         self.edit_enabled = True
