@@ -7,8 +7,7 @@ from handlers.callbackquery.SetLanguage import SetLanguageHandler
 from handlers.callbackquery.SelectChannelSubscriptions import SelectChannelSubscriptionsHandler
 from handlers.callbackquery.SelectSubscriptions import SelectSubscriptionsHandler
 from handlers.callbackquery.BuySubscriptions import BuySubscriptionsHandler
-
-
+from 
 
 
 
@@ -23,8 +22,9 @@ application.add_handler(CommandHandler("start",StartHandler() ))
 application.add_handler(CallbackQueryHandler(SelectLanguageHandler(),"select_language"))
 application.add_handler(CallbackQueryHandler(SetLanguageHandler(),r"\b[a-z]{2}\b"))
 application.add_handler(CallbackQueryHandler(SelectChannelSubscriptionsHandler(),"selectchannelsubscriptions"))
-application.add_handler(CallbackQueryHandler(SelectSubscriptionsHandler(),r"^channel_id:-\d+$"))
-application.add_handler(CallbackQueryHandler(BuySubscriptionsHandler(),r"^channel_id:\d+$"))
+application.add_handler(CallbackQueryHandler(SelectSubscriptionsHandler(),r"^channel_id:\d+$"))
+application.add_handler(CallbackQueryHandler(BuySubscriptionsHandler(),r"^subscriptions_id:\d+$"))
+application.add_handler(CallbackQueryHandler(SelectCryptoCurrencysHandler(),r"^subscriptions_id:\d+$"))
 
 
 

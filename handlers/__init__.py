@@ -4,6 +4,14 @@ import json
 from model import User
 import datetime
 from languages import languages
+import plisio
+
+
+client = plisio.PlisioClient(api_key='your_secret_key')
+
+
+
+
 
 
 class BaseHanler:

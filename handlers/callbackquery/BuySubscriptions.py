@@ -12,18 +12,26 @@ class BuySubscriptionsHandler(BaseHanler):
         await self.show_pannel()
         await self.update.callback_query.answer()
 
-    def get_keyboard(self):
-        channel_id = self.update.callback_query.data.split(":")[1]
+    async def get_keyboard(self):
+        subscription_id = self.update.callback_query.data.split(":")[1]
         
-        subscriptions = Subscriptions.filter(channel = channel_id)
+        subscription = Subscriptions.filter(id = subscription_id)
+        if subscription:
+            subscription = subscription[0] 
+        else:
+            raise ValueError(f"subscriptions_id:{subscription_id} is not exist")
+        
+        
+        
+        
         replay_markup = None
 
-        keyboard = []
-        for subscription in subscriptions:
-            keyboard.append(
-                    [InlineKeyboardButton(
-                        text=subscription.name,callback_data = f"subscription_id:{subscription.id}"
-                )])
+        keyboard = [
+            [
+                InlineKeyboardButton(text=f"{subscription.price}",callback_data=f"select_currency:{subscription.id}")
+            ]
+        ]
+        
         replay_markup = InlineKeyboardMarkup(keyboard)
 
         return replay_markup

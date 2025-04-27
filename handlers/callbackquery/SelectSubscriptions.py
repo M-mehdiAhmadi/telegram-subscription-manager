@@ -12,7 +12,7 @@ class SelectSubscriptionsHandler(BaseHanler):
         await self.show_pannel()
         await self.update.callback_query.answer()
 
-    def get_keyboard(self):
+    async def get_keyboard(self):
         channel_id = self.update.callback_query.data.split(":")[1]
         
         subscriptions = Subscriptions.filter(channel = channel_id)
