@@ -15,8 +15,6 @@ class BaseModel:
         conn.close()
         return [cls(**dict(zip([column[0] for column in cur.description], row))) for row in rows]
     
-    import sqlite3
-import os
 
 class BaseModel:
     _DBNAME = os.path.join(os.getcwd(), "database.db") 
