@@ -69,7 +69,45 @@ class BaseModel:
         columns = [column[0] for column in cur.description]
         conn.close()
         return [cls(**dict(zip(columns, row))) for row in rows]
+    @classmethod
+    def get_all(cls, limit=None, offset=None):
+        """
+        Returns all records from the table corresponding to the model class,
+        with optional pagination (limit, offset).
+        
+        :param limit: Number of records to fetch (Optional)
+        :param offset: Number of records to skip before starting to fetch (Optional)
+        :return: List of model instances
+        """
+        conn = sqlite3.connect(cls._DBNAME)
+        cur = conn.cursor()
 
+        query = f"SELECT * FROM {cls.__name__}"
+        
+        # Adding pagination (limit and offset)
+        if limit is not None:
+            query += f" LIMIT ?"
+        if offset is not None:
+            query += f" OFFSET ?"
+
+        values = []
+        if limit is not None:
+            values.append(limit)
+        if offset is not None:
+            values.append(offset)
+
+        try:
+            cur.execute(query, values)
+            rows = cur.fetchall()
+            columns = [column[0] for column in cur.description]
+            conn.close()
+
+            # Mapping rows to the model instances
+            return [cls(**dict(zip(columns, row))) for row in rows]
+        except sqlite3.Error as e:
+            conn.close()
+            print(f"An error occurred: {e}")
+            return []
         
 
 
@@ -110,7 +148,7 @@ class Channel (BaseModel):
         self.name = name
         self.chat_id = chat_id
         
-class Subtraction (BaseModel):
+class Subscriptions (BaseModel):
     def __init__(self,id,price,name,channel):
         self.id = id
         self.price = price
@@ -129,7 +167,7 @@ class Payment (BaseModel):
         self.invoice_id = invoice_id
         self.invoice_link = invoice_link
         self.date = date
-class User2subscription (BaseModel):
+class User2subscriptions (BaseModel):
     def __init__(self,user,sub,date,id,link,chat_id):
         self.user = user
         self.sub = sub

@@ -4,14 +4,27 @@ from telegram.ext import ContextTypes,ApplicationBuilder,CommandHandler,Callback
 from handlers.command.start import StartHandler
 from handlers.callbackquery.SelectLanguage import SelectLanguageHandler
 from handlers.callbackquery.SetLanguage import SetLanguageHandler
+from handlers.callbackquery.SelectChannelSubscriptions import SelectChannelSubscriptionsHandler
+from handlers.callbackquery.SelectSubscriptions import SelectSubscriptionsHandler
+from handlers.callbackquery.BuySubscriptions import BuySubscriptionsHandler
+
+
+
+
+
+
+
+
+
 TOKEN = "7552347461:AAGuZrGFK07qvKT18vabBxxxSsXbFShXcgY"
 application = ApplicationBuilder().token(TOKEN).build()
 
 application.add_handler(CommandHandler("start",StartHandler() ))
 application.add_handler(CallbackQueryHandler(SelectLanguageHandler(),"select_language"))
 application.add_handler(CallbackQueryHandler(SetLanguageHandler(),r"\b[a-z]{2}\b"))
-
-
+application.add_handler(CallbackQueryHandler(SelectChannelSubscriptionsHandler(),"selectchannelsubscriptions"))
+application.add_handler(CallbackQueryHandler(SelectSubscriptionsHandler(),r"^channel_id:-\d+$"))
+application.add_handler(CallbackQueryHandler(BuySubscriptionsHandler(),r"^channel_id:\d+$"))
 
 
 
