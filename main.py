@@ -17,14 +17,4 @@ application.add_handler(CallbackQueryHandler(SetLanguageHandler(),r"\b[a-z]{2}\b
 
 
 
-
-
-
-
-
-
 application.run_polling()
-
-
-
-

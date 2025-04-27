@@ -14,16 +14,23 @@ class BaseModel:
         rows = cur.fetchall()
         conn.close()
         return [cls(**dict(zip([column[0] for column in cur.description], row))) for row in rows]
-    @classmethod
-    def save(cls):
-        
-        table_name = cls.__name__
-        pk = cls._primary_key
-        fields = [k for k, v in cls.__dict__.items() if not callable(v) and not k.startswith('_') or k.startswith(f'_{cls.__name__}__')]
-        values = [getattr(cls,field) for field in fields]
-        id_val = getattr(cls, pk, None) if pk in fields else None
+    
+    import sqlite3
+import os
 
-        conn = sqlite3.connect(cls._DBNAME)
+class BaseModel:
+    _DBNAME = os.path.join(os.getcwd(), "database.db") 
+    _primary_key = "id"  # همه کلاس‌ها میتونن override کنن اگر لازم بود
+
+    def save(self):
+        table_name = self.__class__.__name__
+        pk = self._primary_key
+
+        fields = [k for k in self.__dict__.keys() if not k.startswith('_') and not callable(getattr(self, k))]
+        values = [getattr(self, field) for field in fields]
+        id_val = getattr(self, pk, None) if pk in fields else None
+
+        conn = sqlite3.connect(self._DBNAME)
         cur = conn.cursor()
 
         if id_val is None:
@@ -32,16 +39,18 @@ class BaseModel:
             placeholders = ", ".join(["?"] * len(fields))
             query = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
             cur.execute(query, values)
-            cls.id = cur.lastrowid  # ذخیره id جدید
+            if pk == "id":  # فقط اگر کلید اولیه id بود
+                setattr(self, "id", cur.lastrowid)
         else:
             # UPDATE
             assignments = ", ".join([f"{key}=?" for key in fields])
             values.append(id_val)
-            query = f"UPDATE {table_name} SET {assignments} WHERE id=?"
+            query = f"UPDATE {table_name} SET {assignments} WHERE {pk}=?"
             cur.execute(query, values)
 
         conn.commit()
         conn.close()
+
     @classmethod
     def filter(cls, **kwargs):
         conn = sqlite3.connect(cls._DBNAME)
@@ -128,6 +137,5 @@ class User2subscription (BaseModel):
         self.id = id
         self.link = link
         self.chat_id = chat_id
-        
-        
-        
+
+
