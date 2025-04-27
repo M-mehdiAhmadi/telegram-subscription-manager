@@ -4,7 +4,7 @@ import os
 
 class BaseModel:
     _DBNAME = os.path.join(os.getcwd(),"database.db")  # esme database o bsh midim
-    _primary_key = None
+    _primary_key = "id"
     
     @classmethod
     def get_all(cls):
@@ -14,16 +14,16 @@ class BaseModel:
         rows = cur.fetchall()
         conn.close()
         return [cls(**dict(zip([column[0] for column in cur.description], row))) for row in rows]
-
-    def save(self):
+    @classmethod
+    def save(cls):
         
-        table_name = self.__class__.__name__
-        pk = self._primary_key
-        fields = [attr for attr in self.__dict__.keys() if not attr.startswith("_")]
-        values = [getattr(self,field) for field in fields]
-        id_val = getattr(self, pk, None) if pk in fields else None
+        table_name = cls.__name__
+        pk = cls._primary_key
+        fields = [k for k, v in cls.__dict__.items() if not callable(v) and not k.startswith('_') or k.startswith(f'_{cls.__name__}__')]
+        values = [getattr(cls,field) for field in fields]
+        id_val = getattr(cls, pk, None) if pk in fields else None
 
-        conn = sqlite3.connect(self._DBNAME)
+        conn = sqlite3.connect(cls._DBNAME)
         cur = conn.cursor()
 
         if id_val is None:
@@ -32,7 +32,7 @@ class BaseModel:
             placeholders = ", ".join(["?"] * len(fields))
             query = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
             cur.execute(query, values)
-            self.id = cur.lastrowid  # ذخیره id جدید
+            cls.id = cur.lastrowid  # ذخیره id جدید
         else:
             # UPDATE
             assignments = ", ".join([f"{key}=?" for key in fields])
@@ -76,6 +76,7 @@ class BaseModel:
 
 
 class User(BaseModel):
+    _primary_key = "chat_id"
     def __init__(self,chat_id,time_created,is_active,phone,is_admin,language):
         self.chat_id = chat_id
         self.time_created = time_created

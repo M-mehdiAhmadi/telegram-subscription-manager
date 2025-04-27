@@ -1,4 +1,4 @@
-from handlers import *
+from handlers.command import *
 
 
 
