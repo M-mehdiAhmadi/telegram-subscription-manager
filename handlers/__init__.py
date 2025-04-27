@@ -14,8 +14,8 @@ client = plisio.PlisioClient(api_key='your_secret_key')
 
 
 
-class BaseHanler:
-    def __init__(self,parent):
+class BaseHandler:
+    def __init__(self, parent):
         self.parent = parent
         self.edit_enabled = True
         self.fallback_to_delete = True
