@@ -1,0 +1,20 @@
+ "keyboard": [
+                {"text": "add forc join channel","callback_data": "addforcedjoinchannel"},
+                {"text": "delete forc join channel","callback_data": "deleteforcedjoinchannel"},
+                {"text": "add channel","callback_data": "addchannel"},
+                {"text": "delete channel","callback_data": "deletechannel"},
+                {"text": "add subscription","callback_data": "addsubscription"},
+                {"text": "delete subscription","callback_data": "deletesubscription"},
+                {"text": "ban user","callback_data": "banuser"},
+                {"text": "unban user","callback_data": "unbanuser"},
+                {"text": "add admin","callback_data": "addadmin"},
+                {"text": "remove admin","callback_data": "removeadmin"},
+                {"text": "show all admin","callback_data": "showalladmin"},
+                {"text": "add special user","callback_data": "addspecialuser"},
+                {"text": "remove special user","callback_data": "removespecialuser"},
+                {"text": "export table to csv","callback_data": "exporttabletocsv"},
+                
+                
+                
+                
+            ]

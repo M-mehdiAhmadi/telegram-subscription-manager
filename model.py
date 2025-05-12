@@ -1,22 +1,14 @@
 import sqlite3
 import datetime
 import os
+import csv
+
 
 class BaseModel:
-    _DBNAME = os.path.join(os.getcwd(),"database.db")  # esme database o bsh midim
-    _primary_key = "id"
-    
-    @classmethod
-    def get_all(cls):
-        conn = sqlite3.connect(cls._DBNAME) #etesal be database
-        cur = conn.cursor()
-        cur.execute(f"SELECT * FROM {cls.__name__}")
-        rows = cur.fetchall()
-        conn.close()
-        return [cls(**dict(zip([column[0] for column in cur.description], row))) for row in rows]
-    
-
-class BaseModel:
+    """
+    Base class for all models in the application.
+    This class provides methods for saving, deleting, and filtering records in the database.
+    """
     _DBNAME = os.path.join(os.getcwd(), "database.db") 
     _primary_key = "id"  # همه کلاس‌ها میتونن override کنن اگر لازم بود
 
@@ -49,6 +41,21 @@ class BaseModel:
         conn.commit()
         conn.close()
 
+    def delete(self):
+        """
+        Deletes the current instance from the database.
+        """
+        table_name = self.__class__.__name__
+        pk = self._primary_key
+
+        conn = sqlite3.connect(self._DBNAME)
+        cur = conn.cursor()
+
+        query = f"DELETE FROM {table_name} WHERE {pk} = ?"
+        cur.execute(query, (getattr(self, pk),))
+
+        conn.commit()
+        conn.close()
     @classmethod
     def filter(cls, **kwargs):
         conn = sqlite3.connect(cls._DBNAME)
@@ -106,72 +113,111 @@ class BaseModel:
             conn.close()
             print(f"An error occurred: {e}")
             return []
-        
 
+    @classmethod
+    def get_model_by_table_name(cls, table_name: str):
+        for subclass in cls.__subclasses__():
+            if subclass.__name__.lower() == table_name.lower():
+                return subclass
+        return None
+    
+    @classmethod
+    def export_to_csv(cls, output_dir="exports"):
+        table_name = cls.__name__
+        db_path = cls._DBNAME
 
+        conn = sqlite3.connect(db_path)
+        cur = conn.cursor()
 
+        # بررسی وجود جدول
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
+        if not cur.fetchone():
+            conn.close()
+            raise ValueError(f"❌ Table '{table_name}' does not exist in database.")
 
+        # گرفتن داده‌ها
+        cur.execute(f"SELECT * FROM {table_name}")
+        rows = cur.fetchall()
+        columns = [desc[0] for desc in cur.description]
+        conn.close()
 
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir)
 
+        filename = f"{table_name.lower()}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv"
+        filepath = os.path.join(output_dir, filename)
 
+        with open(filepath, mode='w', newline='', encoding='utf-8') as f:
+            writer = csv.writer(f)
+            writer.writerow(columns)
+            writer.writerows(rows)
 
-
-
-
-
-
+        return filepath  # مسیر فایل CSV
+    
+    
 class User(BaseModel):
     _primary_key = "chat_id"
-    def __init__(self,chat_id,time_created,is_active,phone,is_admin,language):
+    def __init__(self, chat_id, time_created, is_active, phone, is_admin, language, is_special=0):
         self.chat_id = chat_id
         self.time_created = time_created
         self.is_active = is_active
         self.phone = phone
         self.is_admin = is_admin
         self.language = language
+        self.is_special = is_special
+
     @classmethod
-    def get_by_chat_id(cls,chat_id):
-        conn = sqlite3.connect(cls._DBNAME) 
-        cur = conn.cursor() 
-        
-        cur.execute(f"SELECT * FROM {cls.__name__} WHERE chat_id={chat_id}")
+    def get_by_chat_id(cls, chat_id):
+        conn = sqlite3.connect(cls._DBNAME)
+        cur = conn.cursor()
+
+        cur.execute(f"SELECT * FROM {cls.__name__} WHERE chat_id=?", (chat_id,))
         row = cur.fetchone()
         conn.close()
         return cls(*row) if row else None
     
         
 class Channel (BaseModel):
-    def __init__(self,id,name,chat_id):
+    def __init__(self, id, name, chat_id, link=None):
         self.id = id
         self.name = name
         self.chat_id = chat_id
+        self.link = link
         
 class Subscriptions (BaseModel):
-    def __init__(self,id,price,name,channel):
+    def __init__(self, id, price, name, channel, day):
         self.id = id
         self.price = price
-        self.channel = channel
         self.name = name
+        self.channel = channel
+        self.day = day
+
 class Joinforce (BaseModel):
     def __init__(self,id,link,name):
         self.id = id
         self.link = link
         self.name = name
 class Payment (BaseModel):
-    def __init__(self,id,user,subtraction,invoice_id,invoice_link,date):
+    def __init__(self,id,user,subscriptions,invoice_id,invoice_link,date):
         self.id = id
         self.user = user
-        self.subtraction = subtraction
+        self.subscriptions = subscriptions
         self.invoice_id = invoice_id
         self.invoice_link = invoice_link
         self.date = date
 class User2subscriptions (BaseModel):
-    def __init__(self,user,sub,date,id,link,chat_id):
+    def __init__(self,user,subscriptions,date,id,link,chat_id):
         self.user = user
-        self.sub = sub
+        self.subscriptions = subscriptions
         self.date = date
         self.id = id
         self.link = link
         self.chat_id = chat_id
+
+class Specialuser(BaseModel):
+    def __init__(self, id, user, channel):
+        self.id = id  # Primary key
+        self.user = user  # References User (chat_id)
+        self.channel = channel  # References Channel (id)
 
 

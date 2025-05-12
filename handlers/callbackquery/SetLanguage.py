@@ -1,7 +1,8 @@
 from handlers.callbackquery import *
-
+from handlers.handlers_permissions import permissions
 
 class SetLanguageHandler(BaseHandler):
+    permissions = [permissions.IsActiveUserPermissionHandler]
     def __init__(self):
         super().__init__(parent=self)
         self.edit_enabled = True

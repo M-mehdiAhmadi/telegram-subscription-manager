@@ -1,20 +1,52 @@
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ContextTypes,ApplicationBuilder,CommandHandler
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup,Message
+from telegram.ext import ContextTypes,filters
+from abc import ABC, abstractmethod
 import json
-from model import User
+from model import User,BaseModel,Channel
 import datetime
 from languages import languages
 import plisio
+from settings import PLISIO_API_KEY
 
 
-client = plisio.PlisioClient(api_key='your_secret_key')
+client = plisio.PlisioClient(api_key=PLISIO_API_KEY)
 
+class BasePermission:
+    """
+    Base class for permission handling in Telegram bot handlers.
+    This class provides a mechanism to check if a user has permission to access certain features or commands.
+    """
+    _has_no_permission_message = f"Access is blocked. {__name__} permission is not granted."
+    _has_permission = True
+    
+    def __init__(self, update: Update, context: ContextTypes.DEFAULT_TYPE,user: User):
+        """
+        Initialize the BasePermission class with the update, context, and user.
+        """
+        self.user = user
+        self.context = context
+        self.update = update
+        self.chat_id = update.effective_chat.id
+    
+    async def has_permission(self):
+        if self._has_permission:
+            return True
+        return await self.has_no_permission()
+    
+    def set_no_has_permission(self, has_permission: bool):
+        self._has_permission = has_permission
+    
+    async def has_no_permission(self):
+        print(self._has_no_permission_message)        
 
-
-
-
-
-class BaseHandler:
+class BaseHandler(ABC):
+    """
+    Base class for all handlers in the Telegram bot.
+    This class provides a structure for handling user interactions and permissions.
+    """
+    
+    permissions = []
+    
     def __init__(self, parent):
         self.parent = parent
         self.edit_enabled = True
@@ -25,7 +57,15 @@ class BaseHandler:
         self.update = update
         self.chat_id = update.effective_chat.id
         
-        return await self.get()
+        user = self.get_or_create_user()
+        
+        for perm_cls in self.permissions:
+            perm = perm_cls(self, update, context, user )
+            if not await perm.has_permission():  # block access
+                return
+        return await self.get()  # Ensure to return the result of get() 
+        
+    @abstractmethod
     async def get(self):
         """
         This method is called when the handler is invoked.
@@ -43,9 +83,9 @@ class BaseHandler:
             user = User(
                 chat_id=self.chat_id,
                 time_created=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                is_active=0,
+                is_active=1,
                 phone=None,
-                is_admin=1,
+                is_admin=0,
                 language="en"
             )
             user.save()
@@ -92,13 +132,7 @@ class BaseHandler:
             await self.send_message()
         else:
             await self.send_message()
-        
-            
-        
-        
-        
-        
-        
+ 
     async def edit_message(self):  
         text = await self.get_text()  
         keyboard = await self.get_keyboard()
@@ -137,19 +171,4 @@ class BaseHandler:
 
     def set_previous_message_id(self, message_id):
         self.context.user_data["previous_message_id"] = message_id
-        
-        
-        
-        
-        
-        
-            
-    
-    
 
-        
-        
-        
-    
-            
-             
