@@ -9,8 +9,9 @@ class AdminPannelHandler(BaseHandler):
         self.fallback_to_delete = False
 
     async def get(self):
-        user = self.get_or_create_user()
-        if user.is_admin == 1:
-            await self.show_pannel()
+        
+        await self.show_pannel()
+    
+    
 
 

@@ -15,13 +15,18 @@ class RemoveSpecialUserHandler(BaseHandler):
 
         identifier = args[0]
 
+        userclient = UserClient()
         # Check if identifier is a chat_id or username
         if identifier.isdigit():
-            user = User.filter(chat_id=int(identifier))
+            chat_id = identifier
         else:
-            user = User.filter(username=identifier)
+            chat = await self.context.bot.get_chat(chat_id=identifier)
+            chat_id = chat.id
 
+            
+            
+        user = userclient.getUser_by_username(username=chat_id)
         # Remove special privileges
-        user[0].is_special = 0
-        user[0].save()
+        user.is_special = False
+        user.save()
         await self.show_pannel()

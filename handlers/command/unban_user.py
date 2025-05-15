@@ -1,6 +1,8 @@
 from handlers import *
 from handlers.handlers_permissions import permissions
 from model import User
+from api_client.user_client import UserClient
+
 
 class UnbanUserHandler(BaseHandler):
     permissions = [permissions.IsAdminPermissionHandler]
@@ -17,15 +19,18 @@ class UnbanUserHandler(BaseHandler):
             return
 
         identifier = args[0]
-
+        userclient = UserClient()
         # Check if identifier is a chat_id or username
         if identifier.isdigit():
-            user = User.filter(chat_id=int(identifier))
+            chat_id=int(identifier)
         else:
-            user = User.filter(username=identifier)
-        # Unban the user
-        user[0].is_active = 1
-        user[0].save()
+            chat = await self.context.bot.get_chat(chat_id=identifier)
+            chat_id=chat.id
+            
+        user = userclient.getUser_by_username(username=chat_id)
+        # Ban the user
+        user.is_active = True
+        user.save()
         await self.show_pannel()
     
     

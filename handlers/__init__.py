@@ -2,14 +2,16 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup,Message
 from telegram.ext import ContextTypes,filters
 from abc import ABC, abstractmethod
 import json
-from model import User,BaseModel,Channel
+# from model import User,BaseModel,Channel,Joinforce
 import datetime
 from languages import languages
 import plisio
-from settings import PLISIO_API_KEY
+from api_client.user_client import UserClient
+from settings import PLISIO_API
 
 
-client = plisio.PlisioClient(api_key=PLISIO_API_KEY)
+
+client = plisio.PlisioClient(api_key=PLISIO_API)
 
 class BasePermission:
     """
@@ -19,7 +21,7 @@ class BasePermission:
     _has_no_permission_message = f"Access is blocked. {__name__} permission is not granted."
     _has_permission = True
     
-    def __init__(self, update: Update, context: ContextTypes.DEFAULT_TYPE,user: User):
+    def __init__(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user: UserClient.User):
         """
         Initialize the BasePermission class with the update, context, and user.
         """
@@ -60,7 +62,7 @@ class BaseHandler(ABC):
         user = self.get_or_create_user()
         
         for perm_cls in self.permissions:
-            perm = perm_cls(self, update, context, user )
+            perm:BasePermission = perm_cls(update, context, user)  # Removed the extra 'self' argument
             if not await perm.has_permission():  # block access
                 return
         return await self.get()  # Ensure to return the result of get() 
@@ -73,22 +75,24 @@ class BaseHandler(ABC):
         """
         raise NotImplementedError("Subclasses should implement this method.")
     
-    def get_or_create_user(self):
+    def get_or_create_user(self) -> UserClient.User :
         """
         Retrieve or create a user in the database based on the chat ID.
         If the user does not exist, create a new user with default values.
         """
-        user = User.get_by_chat_id(self.chat_id)
-        if user == None:
-            user = User(
-                chat_id=self.chat_id,
-                time_created=datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                is_active=1,
-                phone=None,
-                is_admin=0,
-                language="en"
-            )
-            user.save()
+        client = UserClient()
+        
+        user = client.getUser_by_username(username=self.chat_id)
+        if not user:
+            user_data = {
+            "username":self.chat_id,
+            'phone': None,
+            'is_active': True,
+            'language': 'en',
+            'is_special': False
+            }
+            user = client.create_user(user_data)
+            
         return user
     
     async def get_text(self):
@@ -120,6 +124,7 @@ class BaseHandler(ABC):
             replay_markup = InlineKeyboardMarkup(keyboard)
             
         return replay_markup
+    
     async def show_pannel(self):
         
         if self.edit_enabled and self.get_previous_message_id() is not None:

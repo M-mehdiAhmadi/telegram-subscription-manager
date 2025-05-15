@@ -40,11 +40,11 @@ application.add_handler(CommandHandler("ban_user", BanUserHandler()))
 application.add_handler(CommandHandler("unban_user", UnbanUserHandler()))
 application.add_handler(CommandHandler("add_admin", AddAdminHandler()))
 application.add_handler(CommandHandler("remove_admin", RemoveAdminHandler()))
-application.add_handler(CommandHandler("show_all_admin", ShowAllAdminHandler()))
+application.add_handler(CommandHandler("showalladmin", ShowAllAdminHandler()))
 application.add_handler(CommandHandler("remove_special_user", RemoveSpecialUserHandler()))
-application.add_handler(CommandHandler("show_all_special_user", ShowAllSpecialUserHandler()))
-application.add_handler(CommandHandler("show_list_of_tables", ShowListOfTablesHandler()))
-application.add_handler(CommandHandler("export_to_csv", ExportToCSVHandler()))
+application.add_handler(CommandHandler("showallspecial_user", ShowAllSpecialUserHandler()))
+application.add_handler(CommandHandler("showlistoftables", ShowListOfTablesHandler()))
+application.add_handler(CommandHandler("exporttocsv", ExportToCSVHandler()))
 
 application.add_handler(CallbackQueryHandler(SelectLanguageHandler(),r"select_language"))
 application.add_handler(CallbackQueryHandler(SetLanguageHandler(),r"\b[a-z]{2}\b"))
@@ -60,5 +60,7 @@ application.add_handler(delete_subscription_handler)
 application.add_handler(add_special_user_handler)
 
 application.add_handler(MessageHandler(filters.ChatType.CHANNEL & AllowedChannelFilter() , ChannelMessageHandler()))
+
+print("bot started ...! ")
 
 application.run_polling()

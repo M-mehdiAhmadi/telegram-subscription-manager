@@ -1,6 +1,10 @@
 from handlers import *
-from model import User, User2subscriptions, Subscriptions,Specialuser
+# from model import User, User2subscriptions, Subscriptions,Specialuser
 import datetime
+from api_client.user_client import UserClient
+from api_client.special_user import SpecialUserClient
+from api_client.user2subscriptions import User2SubscriptionsClient
+from api_client.sub_client import SubscriptionClient
 
 class JoinRequestHandler(BaseHandler):
     def __init__(self):
@@ -9,13 +13,19 @@ class JoinRequestHandler(BaseHandler):
         self.fallback_to_delete = False
     
     async def get(self):
-        user: User = User.get_by_chat_id(self.update.chat_join_request.from_user.id)
+        userclient: UserClient = UserClient()
+        user = userclient.getUser_by_username(username=self.update.chat_join_request.from_user.id)
+        
         chat = self.update.chat_join_request.chat
 
         if not user:
+            await self.update.chat_join_request.decline()
             return  # کاربر ثبت‌نام نکرده است
 
-        specialuser=Specialuser.filter(user=user)
+        specialclient: SpecialUserClient = SpecialUserClient()
+        specialuser =specialclient.filter_by_username(username=user.username)
+        
+        
         if specialuser:
             await self.update.chat_join_request.approve()
         else:
@@ -23,17 +33,21 @@ class JoinRequestHandler(BaseHandler):
     
         current_date = datetime.datetime.now()
         
-        user_subscriptions = User2subscriptions.filter(user=user.chat_id, chat_id=chat.id)
+        user_subscriptions_client = User2SubscriptionsClient()
+        
+        user_subscriptions = user_subscriptions_client.get_by_username_and_chat_id(username=user.username,chat_id=chat.id)
+        
+        
         
     
-        
+        subscriptionclient = SubscriptionClient()
         for user_sub in user_subscriptions:
             try:
                 sub_date = datetime.datetime.strptime(user_sub.date, "%Y-%m-%d %H:%M:%S")
             except ValueError:
                 continue  # تاریخ نادرست
-
-            sub_info_list = Subscriptions.filter(id=user_sub.subscriptions)
+            
+            sub_info_list = subscriptionclient.get_user_subscription(subscription_id=user_sub.subscriptions)
             if not sub_info_list:
                 continue
             

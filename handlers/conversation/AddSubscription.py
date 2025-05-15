@@ -1,6 +1,7 @@
 from handlers.conversation import *
-from model import Channel, Subscriptions
 from handlers.handlers_permissions import permissions
+from api_client.channel_client import ChannelClient
+from api_client.sub_client import SubscriptionClient
 
 class ConversationStates(BaseHandler):
     permissions = [permissions.IsAdminPermissionHandler]
@@ -21,8 +22,10 @@ class AddSubscriptionState(ConversationStates):
         return self.LIST_CHANNELS
     
     async def get_keyboard(self):
-        channels = Channel.get_all()
-
+        channelclient = ChannelClient()
+        
+        channels = channelclient.get_all()
+        
         if not channels:
             await self.context.bot.send_message(
                 chat_id=self.chat_id,
@@ -92,9 +95,9 @@ class ConfirmAddAnotherState(ConversationStates):
         price = self.context.user_data['price']
 
         # Save to database
-        subscription = Subscriptions(id=None, price=price, name=subscription_name, channel=channel_id, day=day)
-        subscription.save()
-
+        subscriptionclient = SubscriptionClient()
+        subscriptionclient.create_subscription( price=price, name=subscription_name, channel=channel_id, day=day)
+        
         await self.show_pannel()
         return self.CONFIRM_ADD_ANOTHER
 

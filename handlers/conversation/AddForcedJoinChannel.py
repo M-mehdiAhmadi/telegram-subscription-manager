@@ -1,5 +1,7 @@
 from handlers.conversation import *
 from handlers.handlers_permissions import permissions
+from api_client.joinforce_client import JoinforceClient
+
 
 class ConversationStates(BaseHandler):
     permissions = [permissions.IsAdminPermissionHandler]
@@ -38,10 +40,14 @@ class GetChannelNameState(ConversationStates):
     async def get(self):
         channel_name = self.update.message.text
         channel_link = self.context.user_data["channel_link"]
-        joinforce = Joinforce(id=None,
-                              channel_name=channel_name,
-                              channel_link=channel_link)
-        joinforce.save()
+        
+        joinforceclient = JoinforceClient()
+        
+        
+        joinforce = joinforceclient.create_joinforce(
+                              name=channel_name,
+                              link=channel_link)
+        
         del self.context.user_data["channel_link"]
         await self.show_pannel()
         return ConversationHandler.END

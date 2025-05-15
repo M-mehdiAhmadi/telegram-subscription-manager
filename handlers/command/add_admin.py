@@ -1,6 +1,7 @@
 from handlers import *
 from handlers.handlers_permissions import permissions
-from model import User
+# from model import User
+from api_client.user_client import UserClient
 
 class AddAdminHandler(BaseHandler):
     permissions = [permissions.IsAdminPermissionHandler]
@@ -16,12 +17,16 @@ class AddAdminHandler(BaseHandler):
         identifier = args[0]
 
         # Check if identifier is a chat_id or username
+        userclient = UserClient()
         if identifier.isdigit():
-            user = User.filter(chat_id=int(identifier))
+            chat_id = identifier
         else:
-            user = User.filter(username=identifier)
+            chat = await self.context.bot.get_chat(chat_id=identifier)
+            chat_id=chat.id
+
+        user = userclient.getUser_by_username(username=chat_id)
 
         # Add admin privileges
-        user[0].is_admin = 1
-        user[0].save()
+        user.is_admin = True
+        user.save()
         await self.show_pannel()

@@ -1,7 +1,7 @@
 from handlers import *
 from handlers.handlers_permissions import permissions
-from model import User
-
+# from model import User
+from api_client.user_client import UserClient
 
 class ShowAllSpecialUserHandler(BaseHandler):
     permissions = [permissions.IsAdminPermissionHandler]
@@ -12,14 +12,18 @@ class ShowAllSpecialUserHandler(BaseHandler):
         await self.show_pannel()
 
     async def get_text(self):
-        special_users = User.filter(is_special=1)
+        userclient = UserClient()
+        
+        special_users = userclient.get_all_special()
         text = ""
         if not special_users:
             text = "No special users found."
         else:
-            admin_list = "List of Special Users:\n"
+            special_list = "List of Special Users:\n"
+            # special_list = await super().get_text()
             for user in special_users:
-                admin_list += f"- Chat ID: {user.chat_id}, Username: {user.username if user.username else 'N/A'}\n"
+                user = await self.context.bot.get_chat(chat_id=user.chat_id)
+                special_list += f"- Chat ID: {user.id}, Username: {user.username if user.username else 'N/A'}\n"
             admin_list += "Total Special Users: {}".format(len(special_users))
             text = admin_list
         return text

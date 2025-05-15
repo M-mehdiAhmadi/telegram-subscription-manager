@@ -1,5 +1,15 @@
-from handlers.conversation import *
+from handlers.conversation import (client,Invoice,
+                                   InlineKeyboardButton,InlineKeyboardMarkup,
+                                   BaseHandler,plisio,datetime,
+                                   ConversationHandler,CallbackQueryHandler,
+                                   CommandHandler,languages,MessageHandler,
+                                   filters
+                                   )
 from handlers.handlers_permissions import permissions
+from api_client.channel_client import ChannelClient
+from api_client.sub_client import SubscriptionClient
+from api_client.payment_client import PaymentClient
+
 
 # Define states for the conversation
 class ConversationStates(BaseHandler):
@@ -22,7 +32,9 @@ class SelectChannelSubscriptionState(ConversationStates):
         return self.SELECT_SUBSCRIPTION
 
     async def get_keyboard(self):
-        channels = Channel.get_all()
+        channelclient = ChannelClient()
+        
+        channels = channelclient.get_all()
         replay_markup = None
 
         keyboard = []
@@ -51,7 +63,8 @@ class SelectSubscriptionState(ConversationStates):
         return self.SELECT_SUBSCRIPTION
     
     async def get_keyboard(self):
-        subscriptions = Subscriptions.filter(channel=self.invoice.channel_id)
+        subscriptionclient = SubscriptionClient()
+        subscriptions = subscriptionclient.get_subscription_by_channel_id(channel_id=self.invoice.channel_id)
         replay_markup = None
 
         keyboard = []
@@ -97,16 +110,20 @@ class SendPaymentLinkState(ConversationStates):
         super().__init__(parent=self)
         self.edit_enabled = True 
     
-    def create_invoice(self) -> Payment:
-        amount = Subscriptions.filter(id=self.invoice.subscription_id)[0].price
+    def create_invoice(self) -> PaymentClient.Payment:
+        subscriptionclient = SubscriptionClient()
+        subscription = subscriptionclient.get_subscription_by_id(id=self.invoice.subscription_id)
+        amount = subscription.price
         date = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        payment = Payment(id=None,
-                          user=self.chat_id,
+        paymentclient = PaymentClient()
+        payment:PaymentClient.Payment = paymentclient.create_payment(user=self.chat_id,
                           subscriptions=self.invoice.subscription_id,
                           invoice_id=None,
                           invoice_link=None,
                           date=date)
-        payment.save()
+        
+        
+        
         invoice = client.invoice(
             currency=self.invoice.cryptocurrency,
             description=f"date: {date}\nsubscription_id: {self.invoice.subscription_id}\nchannel_id: {self.invoice.channel_id}\nuser_id: {self.chat_id}",

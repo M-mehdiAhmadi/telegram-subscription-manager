@@ -1,6 +1,6 @@
 from handlers import *
 from telegram.ext import ConversationHandler,CallbackQueryHandler,CommandHandler,MessageHandler,filters
-from model import Channel,Subscriptions,User2subscriptions,Payment,Joinforce,Specialuser
+# from model import Channel,Subscriptions,User2subscriptions,Payment,Joinforce,Specialuser
 from handlers.handlers_permissions import *
 
 

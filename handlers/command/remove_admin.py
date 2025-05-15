@@ -1,6 +1,7 @@
 from handlers import *
 from handlers.handlers_permissions import permissions
-from model import User
+# from model import User
+from api_client.user_client import UserClient
 
 class RemoveAdminHandler(BaseHandler):
     permissions = [permissions.IsAdminPermissionHandler]
@@ -16,13 +17,18 @@ class RemoveAdminHandler(BaseHandler):
 
         identifier = args[0]
 
+        userclient = UserClient()
         # Check if identifier is a chat_id or username
         if identifier.isdigit():
-            user = User.filter(chat_id=int(identifier))
+            chat_id = identifier
         else:
-            user = User.filter(username=identifier)
+            chat = await self.context.bot.get_chat(chat_id=identifier)
+            chat_id = chat.id
 
+            
+            
+        user = userclient.getUser_by_username(username=chat_id)
         # Remove admin privileges
-        user[0].is_admin = 0
-        user[0].save()
+        user.is_admin = False
+        user.save()
         await self.show_pannel()

@@ -176,6 +176,34 @@ class User(BaseModel):
         conn.close()
         return cls(*row) if row else None
     
+    def save(self):
+        table_name = self.__class__.__name__
+        fields = [k for k in self.__dict__.keys() if not k.startswith('_')]
+        values = [getattr(self, field) for field in fields]
+
+        conn = sqlite3.connect(self._DBNAME)
+        cur = conn.cursor()
+
+        # بررسی وجود کاربر با chat_id
+        cur.execute(f"SELECT 1 FROM {table_name} WHERE chat_id = ?", (self.chat_id,))
+        exists = cur.fetchone()
+
+        if exists:
+            # UPDATE
+            assignments = ", ".join([f"{field}=?" for field in fields])
+            values.append(self.chat_id)
+            query = f"UPDATE {table_name} SET {assignments} WHERE chat_id = ?"
+            cur.execute(query, values)
+        else:
+            # INSERT
+            columns = ", ".join(fields)
+            placeholders = ", ".join(["?"] * len(fields))
+            query = f"INSERT INTO {table_name} ({columns}) VALUES ({placeholders})"
+            cur.execute(query, values)
+
+        conn.commit()
+        conn.close()
+    
         
 class Channel (BaseModel):
     def __init__(self, id, name, chat_id, link=None):

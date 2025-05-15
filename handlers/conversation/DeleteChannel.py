@@ -1,6 +1,7 @@
 from handlers.conversation import *
-from model import Channel
+# from model import Channel
 from handlers.handlers_permissions import permissions
+from api_client.channel_client import ChannelClient
 
 class ConversationStates(BaseHandler):
     permissions = [permissions.IsAdminPermissionHandler]
@@ -20,7 +21,9 @@ class DeleteChannelState(ConversationStates):
         return self.LIST_CHANNELS
     
     async def get_keyboard(self):
-        channels = Channel.get_all()
+        channelclient=ChannelClient()
+        
+        channels = channelclient.get_all()
         
         keyboard = [
             [InlineKeyboardButton(text=channel.name, callback_data=f"delete_channel:{channel.id}")]
@@ -41,7 +44,8 @@ class ConfirmDeleteChannelState(ConversationStates):
         await query.answer()
 
         channel_id = int(query.data.split(":")[-1])
-        channel = Channel.filter(id=channel_id)
+        channelclient=ChannelClient()
+        channel = channelclient.get_channel_by_id(id=channel_id)
 
         if not channel:
             await self.context.bot.send_message(
@@ -50,7 +54,8 @@ class ConfirmDeleteChannelState(ConversationStates):
             )
             return ConversationHandler.END
 
-        channel[0].delete()
+        channelclient.delete(obj_id=channel.id)
+        
         await self.show_pannel()
         return ConversationHandler.END
 

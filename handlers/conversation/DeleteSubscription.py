@@ -1,6 +1,9 @@
 from handlers.conversation import *
-from model import Channel, Subscriptions
+# from model import Channel, Subscriptions
 from handlers.handlers_permissions import permissions
+from api_client.channel_client import ChannelClient
+from api_client.sub_client import SubscriptionClient
+
 
 class ConversationStates(BaseHandler):
     permissions = [permissions.IsAdminPermissionHandler]
@@ -19,7 +22,8 @@ class DeleteSubscriptionState(ConversationStates):
         return self.LIST_CHANNELS
     
     async def get_keyboard(self):
-        channels = Channel.get_all()
+        channelclient = ChannelClient()
+        channels = channelclient.get_all()
         
         keyboard = [
             [InlineKeyboardButton(text=channel.name, callback_data=f"select_channel:{channel.id}")]
@@ -41,11 +45,12 @@ class ListSubscriptionsState(ConversationStates):
         self.context.user_data['channel_id'] = channel_id
         await self.show_pannel()
         return self.LIST_SUBSCRIPTIONS
+    
     async def get_keyboard(self):
-        
-        subscriptions = Subscriptions.filter(channel=self.context.user_data['channel_id'])
+        subscriptionclient = SubscriptionClient()
+        subscriptions = subscriptionclient.get_subscription_by_channel_id(channel_id=self.context.user_data["channel_id"])
+        # subscriptions = Subscriptions.filter(channel=self.context.user_data['channel_id'])
 
-        
 
         keyboard = [
             [InlineKeyboardButton(text=sub.name, callback_data=f"delete_subscription:{sub.id}")]
@@ -64,8 +69,9 @@ class ConfirmDeleteAnotherState(ConversationStates):
         await query.answer()
 
         subscription_id = int(query.data.split(":")[-1])
-        subscription = Subscriptions.filter(id=subscription_id)
-        subscription[0].delete()
+        subscriptionclient=SubscriptionClient()
+        subscriptionclient.delete(obj_id=subscription_id)
+
         await self.show_pannel()
         
         return self.CONFIRM_DELETE_ANOTHER
@@ -89,7 +95,7 @@ class Cancel(ConversationStates):
         super().__init__(parent=self)
 
     async def get(self):
-        
+        await self.show_pannel()
         return ConversationHandler.END
 
 delete_subscription_handler = ConversationHandler(

@@ -1,6 +1,8 @@
 from handlers.conversation import *
-from model import Channel
+# from model import Channel
 from handlers.handlers_permissions import permissions
+from api_client.channel_client import ChannelClient
+
 
 class ConversationStates(BaseHandler):
     permissions = [permissions.IsAdminPermissionHandler]
@@ -30,12 +32,14 @@ class GetChatIDState(ConversationStates):
             self.update.message.reply_text("Channel not found. Please enter a valid chat ID.")
             return ConversationHandler.END
         link = self.context.bot.create_chat_invite_link(chat_id=chat_id)
-        channel = Channel(
-            id=None,
+        channelclient = ChannelClient()
+        channelclient.create_channel(
+            
             name=channel.title,
             chat_id=chat_id,
             link=link
         )
+        
         await self.show_pannel()
         return ConversationHandler.END
 

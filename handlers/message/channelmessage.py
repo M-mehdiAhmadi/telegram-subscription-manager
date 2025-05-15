@@ -1,9 +1,11 @@
 from handlers.message import *
 import asyncio
+from api_client.user2subscriptions import User2SubscriptionsClient
+
 
 class ChannelMessageHandler(BaseHandler):
-    def __init__(self, parent):
-        super().__init__(parent)
+    def __init__(self):
+        super().__init__(parent=self)
         self.edit_enabled = False
         self.fallback_to_delete = False
         
@@ -18,7 +20,9 @@ class ChannelMessageHandler(BaseHandler):
         # Get the list of users in the channel
         current_date = datetime.datetime.now()
         
-        users = User2subscriptions.filter(chat_id=self.chat_id)
+        client = User2SubscriptionsClient()
+        
+        users: list[User2SubscriptionsClient.User2Subscriptions] = client.get_users_by_chat_id(chat_id=self.chat_id)
         
         sleep_member_after_kick = 10
         

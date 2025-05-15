@@ -1,8 +1,10 @@
 from handlers.conversation import *
 from handlers.handlers_permissions import permissions
-from model import User
+# from model import User
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-
+from api_client.channel_client import ChannelClient
+from api_client.user_client import UserClient
+from api_client.special_user import SpecialUserClient
 
 class ConversationStates(BaseHandler):
     permissions = [permissions.IsAdminPermissionHandler]
@@ -22,17 +24,22 @@ class AddSpecialUserHandler(ConversationStates):
             return
 
         identifier = args[0]
-
+        userclient = UserClient()
         # Check if identifier is a chat_id or username
         if identifier.isdigit():
-            user = User.filter(chat_id=int(identifier))
+            chat_id = int(identifier)
+            
         else:
-            user = User.filter(username=identifier)
+            chat = await self.context.bot.get_chat(chat_id=identifier)
+            chat_id = chat.id
+        
+        user = userclient.getUser_by_username(username=chat_id)
 
         # Add special privileges
-        if user[0].is_special == 1:
+        if user.is_special == True:
             await self.update.message.reply_text("User is already special.")
             return
+        self.context.user_data["user"] = user
         
         await self.show_pannel()
         return self.GET_CHANNEL
@@ -40,7 +47,9 @@ class AddSpecialUserHandler(ConversationStates):
 
     async def get_keyboard(self):
         
-        channels = Channel.get_all()
+        channelclient = ChannelClient()
+        
+        channels = channelclient.get_all()
         if not channels:
             await self.update.message.reply_text("No channels available.")
             return
@@ -65,27 +74,29 @@ class GetChannelHandler(ConversationStates):
         query = self.update.callback_query
         channel_id = int(query.data.split(":")[1])
         
-        user = User.get_by_chat_id(self.chat_id)
+        user:UserClient.User = self.context.user_data["user"]
         
-        channel:Channel = Channel.filter(id=channel_id)
+        channelclient = ChannelClient()
+        specialuserclient = SpecialUserClient()
+                
+        channel:ChannelClient.Channel = channelclient.retrieve(obj_id=channel_id)
         
-        user.is_special = 1
+        specialuserclient.create_special_user(user=user,channel=channel)
+        
+        user.is_special =True
         user.save()
         
-        specialuser =Specialuser(id=None, user=user.chat_id, channel=channel_id)
-        
-        specialuser.save()
-        
-        self.context.bot.send_message(
-            chat_id=self.chat_id,
-            text=f"{channel.link}",
-            parse_mode="html"
-        )
+        self.link = channel.link
         
         await self.show_pannel()
         
         return ConversationHandler.END
     
+    async def get_text(self):
+        text = await super().get_text()
+        text += f"\n{self.link}"
+        return text
+        
 class Cancel(ConversationStates):
     def __init__(self):
         super().__init__(parent=self)
