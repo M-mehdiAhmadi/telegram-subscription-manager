@@ -61,6 +61,13 @@ application.add_handler(add_special_user_handler)
 
 application.add_handler(MessageHandler(filters.ChatType.CHANNEL & AllowedChannelFilter() , ChannelMessageHandler()))
 
-print("bot started ...! ")
+print("""
+        ╔════════════════════════════════════════════╗
+        ║         Telegram Subscription Bot          ║
+        ╠════════════════════════════════════════════╣
+        ║             Status  : Running              ║
+        ║       Started : 2026-06-30 06:55:56        ║
+        ╚════════════════════════════════════════════╝
+      """)
 
 application.run_polling()
