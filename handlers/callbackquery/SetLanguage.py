@@ -1,5 +1,6 @@
 from handlers.callbackquery import *
 from handlers.handlers_permissions import permissions
+from handlers.command.start import StartHandler
 
 class SetLanguageHandler(BaseHandler):
     permissions = [permissions.IsActiveUserPermissionHandler]
@@ -17,3 +18,6 @@ class SetLanguageHandler(BaseHandler):
         
         await self.show_pannel()       
         await self.update.callback_query.answer()
+        
+        
+        await StartHandler()(self.update, self.context)
