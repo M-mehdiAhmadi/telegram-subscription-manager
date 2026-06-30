@@ -1,33 +1,39 @@
 from .base import BaseAPIClient
+from model import Joinforce
+
 
 class JoinforceClient(BaseAPIClient):
+    model_class = Joinforce
+
     class Joinforce:
-        def __init__(self,id,name,link):
-            self.id=id
+        def __init__(self, id, name, link):
+            self.id = id
             self.name = name
             self.link = link
-    
-    def __init__(self):
-        # از مسیر /v1/api/joinforce/ استفاده می‌کند
-        super().__init__("v1/api/joinforce/")
+
+        def __repr__(self):
+            return f"<Joinforce {self.name}>"
+
+    def _to_obj(self, jf: Joinforce):
+        return self.Joinforce(id=jf.id, name=jf.name, link=jf.link)
 
     def get_all(self) -> list[Joinforce]:
-        force_channels = self.list()
-        return [self.Joinforce(**kwargs) for kwargs in force_channels]
-    
-    def get_channel_by_id(self,id):
-        obj = self.retrieve(obj_id=id)
-        if obj:
-            return self.Joinforce(**obj)
-        raise LookupError("Creation Error")
-    
-    def create_joinforce(self,name,link) -> Joinforce :
-        data = {
-            "name" : name,
-            "link" : link
-        }
-        joinforce = self.create(data=data)
-        if joinforce:
-            return self.Joinforce(**joinforce)
-        raise LookupError("createion error")
-     
+        return [self._to_obj(jf) for jf in Joinforce.get_all()]
+
+    def get_channel_by_id(self, id) -> Joinforce:
+        results = Joinforce.filter(id=id)
+        if results:
+            return self._to_obj(results[0])
+        raise LookupError(f"Joinforce with id={id} not found")
+
+    def create_joinforce(self, name, link) -> Joinforce:
+        jf = Joinforce(id=None, name=name, link=link)
+        jf.save()
+        return self._to_obj(jf)
+
+    def delete_joinforce(self, id):
+        results = Joinforce.filter(id=id)
+        if results:
+            results[0].delete()
+        else:
+            raise LookupError(f"Joinforce with id={id} not found")

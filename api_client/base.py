@@ -1,38 +1,31 @@
-import requests
-from .utils import handle_response
+from model import BaseModel
+
 
 class BaseAPIClient:
-    _domain = "http://127.0.0.1:8000/"
-    def __init__(self, base_url:str):
-        
-        self.base_url = (self._domain.rstrip('/') + '/') + base_url.lstrip("/").rstrip('/') + '/'
-        self.session = requests.Session()
-        
-        # Default headers, can be overridden by passing headers during initialization
-        self.default_headers = {
-            "Authorization": "Token supersecrettoken123",
-            "Content-Type": "application/json"
-        }
-
-        # Set the session headers
-        self.session.headers.update(self.default_headers)
+    """
+    Base class for all API clients.
+    Instead of HTTP requests, directly uses the SQLite ORM (model.py).
+    """
+    model_class = None  # Each subclass sets this to the corresponding model
 
     def list(self):
-        return handle_response(self.session.get(self.base_url))
+        return self.model_class.get_all()
 
     def retrieve(self, obj_id):
-        return handle_response(self.session.get(f"{self.base_url}{obj_id}/"))
+        results = self.model_class.filter(id=obj_id)
+        return results[0] if results else None
 
-    def create(self, data):
-        # Use json=data to send the data as JSON in the request
-        return handle_response(self.session.post(self.base_url, json=data))
+    def create(self, **kwargs):
+        obj = self.model_class(**kwargs)
+        obj.save()
+        return obj
 
-    def update(self, obj_id, data):
-        return handle_response(self.session.put(f"{self.base_url}{obj_id}/", json=data))
+    def update(self, obj):
+        obj.save()
+        return obj
 
-    def delete(self, obj_id):
-        return handle_response(self.session.delete(f"{self.base_url}{obj_id}/"))
+    def delete(self, obj):
+        obj.delete()
 
     def filter(self, **kwargs):
-        """ارسال پارامترهای دلخواه به صورت فیلتر در query string"""
-        return handle_response(self.session.get(self.base_url, params=kwargs))
+        return self.model_class.filter(**kwargs)

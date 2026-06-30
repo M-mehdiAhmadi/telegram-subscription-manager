@@ -1,37 +1,48 @@
-import requests
 import csv
 import os
-from api_client.base import BaseAPIClient
+import datetime
+from model import (
+    BaseModel, User, Channel, Subscriptions,
+    Payment, User2subscriptions, Joinforce, Specialuser
+)
+
 
 class ExportClient:
-    
-    def __init__(self):
-        self.endpoints = {
-            "channels": "vi/api/channels/",
-            "subscriptions": "vi/api/subscriptions/",
-            "user2subscriptions": "vi/api/user2subscriptions/",
-            "specialusers": "vi/api/specialusers/",
-            "payments": "vi/api/payments/",
-            "joinforce": "vi/api/joinforce/",
-            "users": "core/user/users/",  # فرض بر اینه که endpoint کاربران اینه
-        }
-        self.api = BaseAPIClient(base_url="")  # چون آدرس‌ها کامل نیستن، اینجا خالی می‌ذاریم
 
-    def fetch_data(self, table_name):
-        endpoint = self.endpoints.get(table_name.lower())
-        if not endpoint:
-            raise ValueError(f"❌ No endpoint defined for table: {table_name}")
-        url = self.api.base_url + endpoint
-        response = self.api.session.get(url)
-        response.raise_for_status()
-        return response.json()
+    MODEL_MAP = {
+        "users": User,
+        "channel": Channel,
+        "subscriptions": Subscriptions,
+        "payment": Payment,
+        "user2subscriptions": User2subscriptions,
+        "joinforce": Joinforce,
+        "specialuser": Specialuser,
+    }
 
-    def save_csv(self, data, file_path):
-        if not data:
-            raise ValueError("❌ No data received!")
+    def fetch_data(self, table_name: str):
+        model = self.MODEL_MAP.get(table_name.lower())
+        if not model:
+            raise ValueError(f"No model defined for table: {table_name}")
+        return model.get_all()
+
+    def save_csv(self, objects: list, file_path: str):
+        if not objects:
+            raise ValueError("No data to export!")
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+        # Get field names from the first object's __dict__
+        fieldnames = [k for k in objects[0].__dict__.keys() if not k.startswith('_')]
+
         with open(file_path, mode="w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=data[0].keys())
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
-            writer.writerows(data)
+            for obj in objects:
+                writer.writerow({k: getattr(obj, k) for k in fieldnames})
+
         return file_path
+
+    def export(self, table_name: str, output_dir: str = "exports") -> str:
+        data = self.fetch_data(table_name)
+        timestamp = datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
+        file_path = os.path.join(output_dir, f"{table_name}_{timestamp}.csv")
+        return self.save_csv(data, file_path)
