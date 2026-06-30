@@ -10,7 +10,7 @@ class SetLanguageHandler(BaseHandler):
     async def get(self):
         
         data = self.update.callback_query.data
-        print(data)
+        # print(data)
         user = self.get_or_create_user()
         user.language = data
         user.save()
